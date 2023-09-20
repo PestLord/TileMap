@@ -5,13 +5,11 @@ using UnityEngine.UI;
 public class MapBuilder : MonoBehaviour
 {
     [SerializeField] private Grid _grid;
-    private GameObject _tile;
+    private GameObject _currentTile;
     private Vector3 _mousePosition;
-    private bool _possibleToBuild;
+    private bool _canBuildTile;
     private bool[,] _array = new bool[10, 10];
-    private GameObject _tileForPlace;
-
-    private TileColorChange script;
+    private TileColorController _tileColorController;
     /// <summary>
     /// Данный метод вызывается автоматически при клике на кнопки с изображениями тайлов.
     /// В качестве параметра передается префаб тайла, изображенный на кнопке.
@@ -19,42 +17,41 @@ public class MapBuilder : MonoBehaviour
     /// </summary>
     public void StartPlacingTile(GameObject tilePrefab)
     {
-        if (_tile == null)
+        if (_currentTile == null)
         {
-            _tile = Instantiate(tilePrefab);
-            _tileForPlace = tilePrefab;
-            script = _tile.GetComponent<TileColorChange>();
-            
+            _currentTile = Instantiate(tilePrefab);
+            _tileColorController = _currentTile.GetComponent<TileColorController>();
         }
     }
 
     public void Update()
     {
-        if (_tile == null)
+        if (_currentTile == null)
             return;
         _mousePosition = Input.mousePosition;
-        _possibleToBuild = true;
-        script.OnChangeColor(true);
+        _canBuildTile = true;
+        _tileColorController.OnChangeColor(true);
         RaycastHit hit;
         if (Physics.Raycast(Camera.main.ScreenPointToRay(_mousePosition), out hit))
         {
             var worldPosition = hit.point;
             var cellPosition = _grid.WorldToCell(worldPosition);
-            if (cellPosition.x < 0 || cellPosition.z < 0 || cellPosition.x > 9 || cellPosition.z > 9 || _array[cellPosition.x, cellPosition.z])
+            if (cellPosition.x < 0 || cellPosition.z < 0 || cellPosition.x > _array.GetLength(0) || cellPosition.z > _array.GetLength(1) || _array[cellPosition.x, cellPosition.z])
             {
-                _possibleToBuild = false;
-                script.OnChangeColor(false);
+                _canBuildTile = false;
+                _tileColorController.OnChangeColor(false);
             }
                 
             var centerWorldPosition = _grid.GetCellCenterWorld(cellPosition);
-            _tile.transform.position = new Vector3(centerWorldPosition.x, 0, centerWorldPosition.z);
+            _currentTile.transform.position = new Vector3(centerWorldPosition.x, 0, centerWorldPosition.z);
 
-            if (Input.GetMouseButtonDown(0) && _possibleToBuild)
+            if (Input.GetMouseButtonDown(0) && _canBuildTile)
             {
-                var tile = Instantiate(_tileForPlace);
+                _tileColorController.ResetColor();
+                var tile = _currentTile;
                 tile.transform.position = new Vector3(centerWorldPosition.x, 0, centerWorldPosition.z);
                 _array[cellPosition.x, cellPosition.z] = true;
-                _tile = null;
+                _currentTile = null;
             }
         }
     }

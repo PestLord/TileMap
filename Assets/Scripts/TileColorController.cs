@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TileColorChange : MonoBehaviour
+public class TileColorController : MonoBehaviour
 {
     [SerializeField] private Color _possibleColor;
 
@@ -10,7 +10,7 @@ public class TileColorChange : MonoBehaviour
 
     private Renderer[] _childs;
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         _childs = GetComponentsInChildren<Renderer>();
     }
@@ -37,6 +37,13 @@ public class TileColorChange : MonoBehaviour
                 child.material.color = _prohibitedColor;
             }          
         }
-            
+    }
+
+    public void ResetColor()
+    {
+        foreach (var child in _childs)
+        {
+            child.material.color = Color.white;
+        }
     }
 }
